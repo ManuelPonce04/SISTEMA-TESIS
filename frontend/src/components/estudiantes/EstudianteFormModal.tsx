@@ -32,10 +32,12 @@ export const EstudianteFormModal: React.FC<EstudianteFormModalProps> = ({
 
   // Step 3 States
   const [generarMatricula, setGenerarMatricula] = useState(true);
+  const [periodos, setPeriodos] = useState<any[]>([]);
   const [periodoActivo, setPeriodoActivo] = useState<any>(null);
   const [ofertas, setOfertas] = useState<any[]>([]);
   const [tiposMatricula, setTiposMatricula] = useState<any[]>([]);
   const [tarifaBase, setTarifaBase] = useState<number>(0);
+  const [loadingOfertas, setLoadingOfertas] = useState<boolean>(false);
 
   const { register, handleSubmit, setValue, watch, reset, control, trigger, formState: { errors } } = useForm<any>({
     mode: 'onChange',
@@ -84,27 +86,72 @@ export const EstudianteFormModal: React.FC<EstudianteFormModalProps> = ({
     return () => clearTimeout(delayDebounce);
   }, [repCedulaWatcher, setValue, isEditMode]);
 
+  // Manejar cambio de periodo lectivo
+  const handlePeriodoChange = async (periodoId: string | number) => {
+    const pId = Number(periodoId);
+    const p = (periodos || []).find((item: any) => item.id === pId) || null;
+    setPeriodoActivo(p);
+    setValue('matricula.periodo_lectivo_id', pId);
+    setValue('matricula.oferta_academica_id', '');
+    setTarifaBase(0);
+
+    if (!pId) {
+      setOfertas([]);
+      return;
+    }
+
+    setLoadingOfertas(true);
+    try {
+      const resOfertas = await academicoService.getOfertas(pId);
+      if (resOfertas?.success && Array.isArray(resOfertas.data)) {
+        setOfertas(resOfertas.data);
+      } else {
+        setOfertas([]);
+      }
+    } catch (err) {
+      console.error('Error cargando ofertas del periodo:', err);
+      setOfertas([]);
+    } finally {
+      setLoadingOfertas(false);
+    }
+  };
+
   // Cargar datos para Matrícula en modo nuevo
   useEffect(() => {
     if (isOpen && !isEditMode) {
       const fetchCatalogos = async () => {
         try {
-          const [resPeriodo, resTipos] = await Promise.all([
-            academicoService.getPeriodoActivo().catch(() => null),
+          const [resPeriodos, resTipos] = await Promise.all([
+            academicoService.getPeriodos().catch(() => null),
             matriculaService.getTiposMatricula().catch(() => null)
           ]);
           
-          if (resPeriodo?.success && resPeriodo.data) {
-            const periodo = resPeriodo.data;
-            setPeriodoActivo(periodo);
-            setValue('matricula.periodo_lectivo_id', periodo.id);
-            
-            // Cargar ofertas del periodo
-            const resOfertas = await academicoService.getOfertas(periodo.id);
-            if (resOfertas?.success) setOfertas(resOfertas.data);
+          if (resPeriodos?.success && Array.isArray(resPeriodos.data)) {
+            setPeriodos(resPeriodos.data);
+            const activo = resPeriodos.data.find((p: any) => p.es_activo === 1 || p.es_activo === true) || resPeriodos.data[0];
+            if (activo) {
+              setPeriodoActivo(activo);
+              setValue('matricula.periodo_lectivo_id', activo.id);
+              
+              // Cargar ofertas del periodo
+              setLoadingOfertas(true);
+              try {
+                const resOfertas = await academicoService.getOfertas(activo.id);
+                if (resOfertas?.success && Array.isArray(resOfertas.data)) {
+                  setOfertas(resOfertas.data);
+                } else {
+                  setOfertas([]);
+                }
+              } catch (e) {
+                console.error('Error al cargar ofertas iniciales:', e);
+                setOfertas([]);
+              } finally {
+                setLoadingOfertas(false);
+              }
+            }
           }
           
-          if (resTipos?.success) {
+          if (resTipos?.success && Array.isArray(resTipos.data)) {
             setTiposMatricula(resTipos.data);
             if (resTipos.data.length > 0) {
               setValue('matricula.tipo_matricula_id', resTipos.data[0].id);
@@ -123,20 +170,28 @@ export const EstudianteFormModal: React.FC<EstudianteFormModalProps> = ({
     if (periodoActivo && watchOferta && watchTipo && !isEditMode && generarMatricula) {
       const fetchTarifa = async () => {
         try {
-          const oferta = ofertas.find(o => o.id.toString() === watchOferta.toString());
+          const oferta = (ofertas || []).find((o: any) => o?.id?.toString() === watchOferta?.toString());
           if (oferta && oferta.nivel_id) {
             const res = await matriculaService.getTarifa({
               periodo_lectivo_id: periodoActivo.id,
               nivel_id: oferta.nivel_id,
               tipo_matricula_id: watchTipo
             });
-            if (res.success) {
-              setTarifaBase(res.valor);
-              setValue('matricula.tarifa_base', res.valor);
+            if (res?.success) {
+              const val = Number(res.valor);
+              const safeVal = isNaN(val) ? 0 : val;
+              setTarifaBase(safeVal);
+              setValue('matricula.tarifa_base', safeVal);
+            } else {
+              setTarifaBase(0);
+              setValue('matricula.tarifa_base', 0);
             }
+          } else {
+            setTarifaBase(0);
           }
         } catch (error) {
           console.error('Error fetching tarifa:', error);
+          setTarifaBase(0);
         }
       };
       fetchTarifa();
@@ -226,10 +281,10 @@ export const EstudianteFormModal: React.FC<EstudianteFormModalProps> = ({
           try {
             const matriculaPayload = {
               estudiante_id: estudianteId,
-              periodo_lectivo_id: periodoActivo?.id,
+              periodo_lectivo_id: periodoActivo?.id || data.matricula?.periodo_lectivo_id,
               oferta_academica_id: data.matricula.oferta_academica_id,
               tipo_matricula_id: data.matricula.tipo_matricula_id,
-              tarifa_base: tarifaBase,
+              tarifa_base: Number(tarifaBase) || 0,
               valor_descuento: 0,
               valor_recargo: 0,
               // Asignamos el representante guardado
@@ -429,7 +484,7 @@ export const EstudianteFormModal: React.FC<EstudianteFormModalProps> = ({
                   {repStatus === 'new' && (
                     <span className="text-[10px] text-amber-600 font-semibold mt-1 block">⚠ Nuevo representante a crear</span>
                   )}
-                  {errors.representantes?.[0]?.cedula && <span className="text-xs text-red-500 mt-1 block">{errors.representantes[0].cedula.message as string}</span>}
+                  {(errors as any).representantes?.[0]?.cedula && <span className="text-xs text-red-500 mt-1 block">{(errors as any).representantes[0].cedula.message as string}</span>}
                 </div>
 
                 <div>
@@ -439,7 +494,7 @@ export const EstudianteFormModal: React.FC<EstudianteFormModalProps> = ({
                     disabled={repStatus === 'found'}
                     className="form-input w-full disabled:bg-gray-100 disabled:text-gray-400"
                   />
-                  {errors.representantes?.[0]?.nombres && <span className="text-xs text-red-500 mt-1 block">Requerido</span>}
+                  {(errors as any).representantes?.[0]?.nombres && <span className="text-xs text-red-500 mt-1 block">Requerido</span>}
                 </div>
 
                 <div>
@@ -449,7 +504,7 @@ export const EstudianteFormModal: React.FC<EstudianteFormModalProps> = ({
                     disabled={repStatus === 'found'}
                     className="form-input w-full disabled:bg-gray-100 disabled:text-gray-400"
                   />
-                  {errors.representantes?.[0]?.apellidos && <span className="text-xs text-red-500 mt-1 block">Requerido</span>}
+                  {(errors as any).representantes?.[0]?.apellidos && <span className="text-xs text-red-500 mt-1 block">Requerido</span>}
                 </div>
               </div>
 
@@ -476,7 +531,7 @@ export const EstudianteFormModal: React.FC<EstudianteFormModalProps> = ({
                     disabled={repStatus === 'found'}
                     className="form-input w-full disabled:bg-gray-100 disabled:text-gray-400"
                   />
-                  {errors.representantes?.[0]?.telefono && <span className="text-xs text-red-500 mt-1 block">Requerido</span>}
+                  {(errors as any).representantes?.[0]?.telefono && <span className="text-xs text-red-500 mt-1 block">Requerido</span>}
                 </div>
 
                 <div>
@@ -539,31 +594,45 @@ export const EstudianteFormModal: React.FC<EstudianteFormModalProps> = ({
 
               {generarMatricula ? (
                 <div className="space-y-6">
-                  {periodoActivo ? (
-                    <div className="bg-sky-50 text-sky-800 p-3 rounded-lg text-sm border border-sky-100 flex items-center justify-between">
-                      <span className="font-semibold">Periodo Lectivo Activo:</span>
-                      <span className="font-bold">{periodoActivo.nombre}</span>
-                    </div>
-                  ) : (
-                    <div className="bg-amber-50 text-amber-800 p-3 rounded-lg text-sm border border-amber-100">
-                      ⚠ No hay un periodo lectivo activo configurado.
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 mb-1">Oferta Académica (Curso) *</label>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">Periodo Lectivo *</label>
+                      <select
+                        value={periodoActivo?.id || ''}
+                        onChange={(e) => handlePeriodoChange(e.target.value)}
+                        className="form-input w-full cursor-pointer bg-gray-50 focus:bg-white"
+                      >
+                        <option value="">Seleccione periodo...</option>
+                        {(periodos || []).map((p: any) => (
+                          <option key={p.id} value={p.id}>
+                            {p.nombre} {p.es_activo === 1 ? '(Activo)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                      {!periodoActivo && (
+                        <span className="text-xs text-amber-600 mt-1 block">Seleccione un periodo lectivo</span>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">
+                        Oferta Académica (Curso) * {loadingOfertas && <span className="text-sky-500 font-normal">Cargando...</span>}
+                      </label>
                       <select
                         {...register('matricula.oferta_academica_id', { required: generarMatricula })}
                         className="form-input w-full cursor-pointer bg-gray-50 focus:bg-white"
-                        disabled={!periodoActivo}
+                        disabled={!periodoActivo || loadingOfertas}
                       >
-                        <option value="">Seleccione una oferta...</option>
-                        {ofertas.map(o => (
-                          <option key={o.id} value={o.id}>{o.curso_nombre} "{o.paralelo_nombre}" - Cupos: {o.cupos_disponibles}</option>
+                        <option value="">
+                          {loadingOfertas ? 'Cargando cursos...' : (ofertas && ofertas.length > 0 ? 'Seleccione una oferta...' : 'No hay ofertas en este periodo')}
+                        </option>
+                        {(ofertas || []).map((o: any) => (
+                          <option key={o.id} value={o.id}>
+                            {o.curso_nombre || 'Curso'} "{o.paralelo_nombre || 'A'}" - Cupos: {o.cupos_disponibles ?? 0}
+                          </option>
                         ))}
                       </select>
-                      {errors.matricula?.oferta_academica_id && <span className="text-xs text-red-500 mt-1 block">Seleccione la oferta</span>}
+                      {(errors as any).matricula?.oferta_academica_id && <span className="text-xs text-red-500 mt-1 block">Seleccione la oferta</span>}
                     </div>
 
                     <div>
@@ -572,7 +641,7 @@ export const EstudianteFormModal: React.FC<EstudianteFormModalProps> = ({
                         {...register('matricula.tipo_matricula_id', { required: generarMatricula })}
                         className="form-input w-full cursor-pointer bg-gray-50 focus:bg-white"
                       >
-                        {tiposMatricula.map(t => (
+                        {(tiposMatricula || []).map((t: any) => (
                           <option key={t.id} value={t.id}>{t.nombre}</option>
                         ))}
                       </select>
@@ -582,7 +651,7 @@ export const EstudianteFormModal: React.FC<EstudianteFormModalProps> = ({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex justify-between items-center h-full">
                       <span className="text-sm font-semibold text-gray-500">Tarifa Base Calculada:</span>
-                      <span className="text-lg font-bold text-gray-800">${tarifaBase.toFixed(2)}</span>
+                      <span className="text-lg font-bold text-gray-800">${Number(tarifaBase || 0).toFixed(2)}</span>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 mt-2">
