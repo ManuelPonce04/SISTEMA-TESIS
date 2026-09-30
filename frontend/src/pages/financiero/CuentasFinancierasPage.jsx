@@ -1,0 +1,734 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import MainLayout from '../../components/layout/MainLayout';
+import { useAuth } from '../../context/AuthContext';
+import cuentasFinancierasService from '../../services/cuentasFinancierasService';
+import Badge from '../../components/ui/Badge';
+import Swal from 'sweetalert2';
+import {
+  FiPlus, FiSearch, FiFilter, FiEdit2, FiEye, FiToggleLeft, FiToggleRight,
+  FiChevronLeft, FiChevronRight, FiX, FiArrowUp, FiArrowDown,
+  FiCreditCard, FiDollarSign, FiAlertCircle, FiFileText
+} from 'react-icons/fi';
+
+// ── Tipos de cuenta con etiquetas ────────────────────────────
+const TIPOS_CUENTA = [
+  { value: 'CAJA', label: 'Caja', color: 'green' },
+  { value: 'BANCO', label: 'Banco', color: 'blue' },
+  { value: 'CUENTA INTERNA', label: 'Cuenta Interna', color: 'yellow' },
+  { value: 'OTRA', label: 'Otra', color: 'gray' },
+];
+
+const getTipoInfo = (tipo) => TIPOS_CUENTA.find(t => t.value === tipo) || { label: tipo, color: 'gray' };
+
+// ── Formatear moneda ─────────────────────────────────────────
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(value || 0);
+};
+
+// ── Skeleton Loader ──────────────────────────────────────────
+const SkeletonRow = () => (
+  <tr className="animate-pulse">
+    {[...Array(6)].map((_, i) => (
+      <td key={i} className="px-5 py-4">
+        <div className="h-4 bg-gray-200 rounded-lg w-full" />
+      </td>
+    ))}
+  </tr>
+);
+
+// ── Estado vacío ─────────────────────────────────────────────
+const EmptyState = ({ hasFilters }) => (
+  <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+    <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+      <FiCreditCard size={36} className="text-gray-300" />
+    </div>
+    <p className="text-lg font-semibold text-gray-500">
+      {hasFilters ? 'No se encontraron resultados' : 'No hay cuentas registradas'}
+    </p>
+    <p className="text-sm text-gray-400 mt-1">
+      {hasFilters ? 'Intenta ajustar los filtros de búsqueda' : 'Crea la primera cuenta financiera'}
+    </p>
+  </div>
+);
+
+const CuentasFinancierasPage = () => {
+  const { usuario } = useAuth();
+  const isAdmin = usuario?.es_admin === true || usuario?.es_admin === 1;
+
+  // ── Estado principal ─────────────────────────────────────
+  const [cuentas, setCuentas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 15, totalPages: 0 });
+  const [tiposDisponibles, setTiposDisponibles] = useState([]);
+
+  // ── Filtros ──────────────────────────────────────────────
+  const [search, setSearch] = useState('');
+  const [filtroTipo, setFiltroTipo] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
+  const [sortBy, setSortBy] = useState('orden');
+  const [sortOrder, setSortOrder] = useState('ASC');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // ── Modal ────────────────────────────────────────────────
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState('create');
+  const [formData, setFormData] = useState({
+    nombre: '', tipo: 'CAJA', descripcion: '', saldo_inicial: '0.00', orden: 0,
+  });
+  const [formErrors, setFormErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+
+  // ── Fetch data ───────────────────────────────────────────
+  const fetchData = useCallback(async (page = 1) => {
+    setLoading(true);
+    try {
+      const result = await cuentasFinancierasService.getAll({
+        page, limit: pagination.limit, search, tipo: filtroTipo,
+        activo: filtroEstado, sortBy, sortOrder,
+      });
+      if (result.success) {
+        setCuentas(result.data);
+        setPagination(result.pagination);
+        setTiposDisponibles(result.tipos || []);
+      }
+    } catch (error) {
+      console.error('Error al cargar cuentas:', error);
+      Swal.fire('Error', 'No se pudieron cargar las cuentas financieras.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [search, filtroTipo, filtroEstado, sortBy, sortOrder, pagination.limit]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => fetchData(1), 300);
+    return () => clearTimeout(timer);
+  }, [fetchData]);
+
+  // ── Sorting ──────────────────────────────────────────────
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setSortOrder(prev => prev === 'ASC' ? 'DESC' : 'ASC');
+    } else {
+      setSortBy(column);
+      setSortOrder('ASC');
+    }
+  };
+
+  const SortIcon = ({ column }) => {
+    if (sortBy !== column) return <FiArrowUp size={12} className="text-gray-300 ml-1" />;
+    return sortOrder === 'ASC'
+      ? <FiArrowUp size={12} className="text-[#27A9E1] ml-1" />
+      : <FiArrowDown size={12} className="text-[#27A9E1] ml-1" />;
+  };
+
+  // ── Limpiar filtros ──────────────────────────────────────
+  const clearFilters = () => {
+    setSearch('');
+    setFiltroTipo('');
+    setFiltroEstado('');
+  };
+  const hasFilters = search || filtroTipo || filtroEstado;
+
+  // ── Modal handlers ───────────────────────────────────────
+  const openCreate = () => {
+    setModalMode('create');
+    setFormData({ nombre: '', tipo: 'CAJA', descripcion: '', saldo_inicial: '0.00', orden: 0 });
+    setFormErrors({});
+    setSelectedId(null);
+    setShowModal(true);
+  };
+
+  const openEdit = (item) => {
+    setModalMode('edit');
+    setFormData({
+      nombre: item.nombre, tipo: item.tipo,
+      descripcion: item.descripcion || '',
+      saldo_inicial: parseFloat(item.saldo_inicial).toFixed(2),
+      orden: item.orden || 0,
+    });
+    setFormErrors({});
+    setSelectedId(item.id);
+    setShowModal(true);
+  };
+
+  const openView = (item) => {
+    setModalMode('view');
+    setFormData({
+      nombre: item.nombre, tipo: item.tipo,
+      descripcion: item.descripcion || '',
+      saldo_inicial: parseFloat(item.saldo_inicial).toFixed(2),
+      orden: item.orden || 0,
+    });
+    setFormErrors({});
+    setSelectedId(item.id);
+    setShowModal(true);
+  };
+
+  // ── Validación en tiempo real ────────────────────────────
+  const validateField = (name, value) => {
+    const errors = { ...formErrors };
+    switch (name) {
+      case 'nombre':
+        if (!value.trim()) errors.nombre = 'El nombre es obligatorio.';
+        else delete errors.nombre;
+        break;
+      case 'tipo':
+        if (!value) errors.tipo = 'El tipo es obligatorio.';
+        else delete errors.tipo;
+        break;
+      case 'saldo_inicial':
+        if (value !== '' && value !== null) {
+          const num = parseFloat(value);
+          if (isNaN(num)) errors.saldo_inicial = 'Debe ser un número válido.';
+          else {
+            const parts = String(value).split('.');
+            if (parts[1] && parts[1].length > 2) errors.saldo_inicial = 'Máximo dos decimales.';
+            else delete errors.saldo_inicial;
+          }
+        } else {
+          delete errors.saldo_inicial;
+        }
+        break;
+      case 'orden':
+        if (value !== '' && isNaN(parseInt(value))) errors.orden = 'Debe ser un número.';
+        else delete errors.orden;
+        break;
+      default:
+        break;
+    }
+    setFormErrors(errors);
+  };
+
+  const handleFieldChange = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    validateField(name, value);
+  };
+
+  // ── Submit form ──────────────────────────────────────────
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const errors = {};
+    if (!formData.nombre.trim()) errors.nombre = 'El nombre es obligatorio.';
+    if (!formData.tipo) errors.tipo = 'El tipo es obligatorio.';
+    if (formData.saldo_inicial !== '' && formData.saldo_inicial !== null) {
+      const num = parseFloat(formData.saldo_inicial);
+      if (isNaN(num)) errors.saldo_inicial = 'Debe ser un número válido.';
+      else {
+        const parts = String(formData.saldo_inicial).split('.');
+        if (parts[1] && parts[1].length > 2) errors.saldo_inicial = 'Máximo dos decimales.';
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      let result;
+      if (modalMode === 'create') {
+        result = await cuentasFinancierasService.create(formData);
+      } else {
+        result = await cuentasFinancierasService.update(selectedId, formData);
+      }
+
+      if (result.success) {
+        Swal.fire({
+          icon: 'success',
+          title: modalMode === 'create' ? 'Cuenta creada' : 'Cuenta actualizada',
+          text: result.message,
+          timer: 2000,
+          showConfirmButton: false,
+          toast: true,
+          position: 'top-end',
+        });
+        setShowModal(false);
+        fetchData(pagination.page);
+      } else {
+        Swal.fire('Error', result.message || 'Error al guardar.', 'error');
+      }
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Error de conexión.';
+      Swal.fire('Error', msg, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── Toggle estado ────────────────────────────────────────
+  const handleToggle = async (item) => {
+    const action = item.activo ? 'desactivar' : 'activar';
+    const result = await Swal.fire({
+      title: `¿${item.activo ? 'Desactivar' : 'Activar'} cuenta?`,
+      html: `<p class="text-gray-600">Se ${action}á la cuenta <strong>${item.nombre}</strong></p>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: item.activo ? '#EF4444' : '#27A9E1',
+      cancelButtonColor: '#d1d5db',
+      confirmButtonText: item.activo ? 'Sí, desactivar' : 'Sí, activar',
+      cancelButtonText: 'Cancelar',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await cuentasFinancierasService.toggleEstado(item.id);
+        if (res.success) {
+          Swal.fire({
+            icon: 'success', title: res.message, timer: 2000,
+            showConfirmButton: false, toast: true, position: 'top-end',
+          });
+          fetchData(pagination.page);
+        }
+      } catch (error) {
+        Swal.fire('Error', 'No se pudo cambiar el estado.', 'error');
+      }
+    }
+  };
+
+  return (
+    <MainLayout title="Cuentas Financieras" subtitle="Control Financiero / Cuentas">
+      <div className="space-y-4 animate-fade-in">
+
+        {/* ── Header con búsqueda y acciones ───────────────── */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+            <div className="flex-1 w-full sm:w-auto">
+              <div className="relative">
+                <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  id="search-cuentas"
+                  type="text"
+                  placeholder="Buscar por nombre o descripción..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full sm:w-80 pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#27A9E1]/30 focus:border-[#27A9E1] transition-all"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                id="btn-toggle-filters-cuentas"
+                onClick={() => setShowFilters(!showFilters)}
+                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all ${
+                  showFilters || hasFilters
+                    ? 'bg-[#27A9E1]/10 border-[#27A9E1]/30 text-[#27A9E1]'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                }`}
+              >
+                <FiFilter size={16} />
+                Filtros
+                {hasFilters && <span className="w-2 h-2 bg-[#27A9E1] rounded-full" />}
+              </button>
+              {isAdmin && (
+                <button
+                  id="btn-create-cuenta"
+                  onClick={openCreate}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#27A9E1] text-white rounded-xl text-sm font-medium hover:bg-[#1E8BBF] hover:shadow-lg hover:shadow-[#27A9E1]/20 transition-all"
+                >
+                  <FiPlus size={16} />
+                  Nueva Cuenta
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* ── Panel de filtros ─────────────────────────── */}
+          {showFilters && (
+            <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-in">
+              <select
+                id="filter-tipo-cuenta"
+                value={filtroTipo}
+                onChange={(e) => setFiltroTipo(e.target.value)}
+                className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#27A9E1]/30 focus:border-[#27A9E1]"
+              >
+                <option value="">Todos los tipos</option>
+                {TIPOS_CUENTA.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+              </select>
+              <select
+                id="filter-estado-cuenta"
+                value={filtroEstado}
+                onChange={(e) => setFiltroEstado(e.target.value)}
+                className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#27A9E1]/30 focus:border-[#27A9E1]"
+              >
+                <option value="">Todos los estados</option>
+                <option value="true">Activo</option>
+                <option value="false">Inactivo</option>
+              </select>
+              {hasFilters && (
+                <button
+                  id="btn-clear-filters-cuentas"
+                  onClick={clearFilters}
+                  className="text-sm text-[#27A9E1] hover:underline flex items-center gap-1"
+                >
+                  <FiX size={14} /> Limpiar filtros
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ── Tabla ────────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-gray-50/80 text-gray-500 font-medium text-xs uppercase tracking-wider">
+                <tr>
+                  <th className="px-5 py-3.5 cursor-pointer select-none hover:text-[#27A9E1] transition-colors" onClick={() => handleSort('nombre')}>
+                    <span className="flex items-center">Nombre <SortIcon column="nombre" /></span>
+                  </th>
+                  <th className="px-5 py-3.5 cursor-pointer select-none hover:text-[#27A9E1] transition-colors" onClick={() => handleSort('tipo')}>
+                    <span className="flex items-center">Tipo <SortIcon column="tipo" /></span>
+                  </th>
+                  <th className="px-5 py-3.5 hidden md:table-cell">Descripción</th>
+                  <th className="px-5 py-3.5 cursor-pointer select-none hover:text-[#27A9E1] transition-colors text-right" onClick={() => handleSort('saldo_inicial')}>
+                    <span className="flex items-center justify-end">Saldo Inicial <SortIcon column="saldo_inicial" /></span>
+                  </th>
+                  <th className="px-5 py-3.5 cursor-pointer select-none hover:text-[#27A9E1] transition-colors" onClick={() => handleSort('activo')}>
+                    <span className="flex items-center">Estado <SortIcon column="activo" /></span>
+                  </th>
+                  <th className="px-5 py-3.5 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {loading ? (
+                  [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
+                ) : cuentas.length === 0 ? (
+                  <tr>
+                    <td colSpan="6">
+                      <EmptyState hasFilters={!!hasFilters} />
+                    </td>
+                  </tr>
+                ) : (
+                  cuentas.map((item) => {
+                    const tipoInfo = getTipoInfo(item.tipo);
+                    return (
+                      <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                              item.tipo === 'CAJA' ? 'bg-green-100 text-green-600' :
+                              item.tipo === 'BANCO' ? 'bg-blue-100 text-blue-600' :
+                              item.tipo === 'CUENTA INTERNA' ? 'bg-amber-100 text-amber-600' :
+                              'bg-gray-100 text-gray-600'
+                            }`}>
+                              <FiCreditCard size={18} />
+                            </div>
+                            <span className="font-medium text-gray-800">{item.nombre}</span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <Badge variant={tipoInfo.color}>{tipoInfo.label}</Badge>
+                        </td>
+                        <td className="px-5 py-3.5 text-gray-500 text-xs hidden md:table-cell max-w-xs truncate" title={item.descripcion}>
+                          {item.descripcion || '—'}
+                        </td>
+                        <td className="px-5 py-3.5 text-right font-mono text-sm font-semibold text-gray-800">
+                          {formatCurrency(item.saldo_inicial)}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <Badge variant={item.activo ? 'green' : 'gray'}>
+                            {item.activo ? 'Activo' : 'Inactivo'}
+                          </Badge>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              id={`btn-view-cuenta-${item.id}`}
+                              onClick={() => openView(item)}
+                              className="p-2 text-gray-400 hover:text-[#27A9E1] hover:bg-[#27A9E1]/10 rounded-lg transition-colors"
+                              title="Ver detalles"
+                            >
+                              <FiEye size={16} />
+                            </button>
+                            {isAdmin && (
+                              <>
+                                <button
+                                  id={`btn-edit-cuenta-${item.id}`}
+                                  onClick={() => openEdit(item)}
+                                  className="p-2 text-gray-400 hover:text-[#F4C542] hover:bg-[#F4C542]/10 rounded-lg transition-colors"
+                                  title="Editar"
+                                >
+                                  <FiEdit2 size={16} />
+                                </button>
+                                <button
+                                  id={`btn-toggle-cuenta-${item.id}`}
+                                  onClick={() => handleToggle(item)}
+                                  className={`p-2 rounded-lg transition-colors ${
+                                    item.activo
+                                      ? 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                                      : 'text-gray-400 hover:text-green-500 hover:bg-green-50'
+                                  }`}
+                                  title={item.activo ? 'Desactivar' : 'Activar'}
+                                >
+                                  {item.activo ? <FiToggleRight size={16} /> : <FiToggleLeft size={16} />}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ── Paginación ────────────────────────────────── */}
+          {!loading && pagination.totalPages > 1 && (
+            <div className="px-5 py-3.5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/50">
+              <p className="text-xs text-gray-500">
+                Mostrando {((pagination.page - 1) * pagination.limit) + 1} a {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total} registros
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  id="btn-prev-page-cuentas"
+                  onClick={() => fetchData(pagination.page - 1)}
+                  disabled={pagination.page <= 1}
+                  className="p-2 rounded-lg text-gray-500 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <FiChevronLeft size={16} />
+                </button>
+                {[...Array(pagination.totalPages)].map((_, i) => {
+                  const pageNum = i + 1;
+                  if (
+                    pagination.totalPages <= 7 ||
+                    pageNum === 1 ||
+                    pageNum === pagination.totalPages ||
+                    Math.abs(pageNum - pagination.page) <= 1
+                  ) {
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => fetchData(pageNum)}
+                        className={`min-w-[36px] h-9 rounded-lg text-sm font-medium transition-colors ${
+                          pageNum === pagination.page
+                            ? 'bg-[#27A9E1] text-white shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  }
+                  if (pageNum === pagination.page - 2 || pageNum === pagination.page + 2) {
+                    return <span key={pageNum} className="px-1 text-gray-400">…</span>;
+                  }
+                  return null;
+                })}
+                <button
+                  id="btn-next-page-cuentas"
+                  onClick={() => fetchData(pagination.page + 1)}
+                  disabled={pagination.page >= pagination.totalPages}
+                  className="p-2 rounded-lg text-gray-500 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <FiChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Info total ────────────────────────────────── */}
+          {!loading && pagination.totalPages <= 1 && pagination.total > 0 && (
+            <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
+              <p className="text-xs text-gray-500">{pagination.total} registro(s) encontrado(s)</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════ */}
+      {/* ── Modal Crear / Editar / Ver ───────────────────── */}
+      {/* ══════════════════════════════════════════════════════ */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-scale-in max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
+              <div>
+                <h3 className="font-bold text-gray-800 text-lg">
+                  {modalMode === 'create' ? 'Nueva Cuenta' : modalMode === 'edit' ? 'Editar Cuenta' : 'Detalle de la Cuenta'}
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {modalMode === 'create' ? 'Registra una nueva cuenta financiera' : modalMode === 'edit' ? 'Modifica los datos de la cuenta' : 'Información completa de la cuenta'}
+                </p>
+              </div>
+              <button
+                id="btn-close-modal-cuenta"
+                onClick={() => setShowModal(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
+              {/* Nombre */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <FiCreditCard size={14} className="inline mr-1 text-gray-400" />Nombre <span className="text-red-400">*</span>
+                </label>
+                <input
+                  id="input-nombre-cuenta"
+                  type="text"
+                  maxLength={150}
+                  value={formData.nombre}
+                  onChange={(e) => handleFieldChange('nombre', e.target.value)}
+                  disabled={modalMode === 'view'}
+                  placeholder="Ej: Caja, Banco, Liliana"
+                  className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
+                    formErrors.nombre ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-[#27A9E1]/30 focus:border-[#27A9E1]'
+                  } ${modalMode === 'view' ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
+                />
+                {formErrors.nombre && (
+                  <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                    <FiAlertCircle size={12} /> {formErrors.nombre}
+                  </p>
+                )}
+              </div>
+
+              {/* Tipo y Saldo Inicial */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Tipo de cuenta <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    id="input-tipo-cuenta"
+                    value={formData.tipo}
+                    onChange={(e) => handleFieldChange('tipo', e.target.value)}
+                    disabled={modalMode === 'view'}
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
+                      formErrors.tipo ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-[#27A9E1]/30 focus:border-[#27A9E1]'
+                    } ${modalMode === 'view' ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
+                  >
+                    {TIPOS_CUENTA.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                  {formErrors.tipo && (
+                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                      <FiAlertCircle size={12} /> {formErrors.tipo}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    <FiDollarSign size={14} className="inline mr-1 text-gray-400" />Saldo Inicial
+                  </label>
+                  <input
+                    id="input-saldo-inicial"
+                    type="text"
+                    inputMode="decimal"
+                    value={formData.saldo_inicial}
+                    onChange={(e) => {
+                      // Solo permitir números y punto decimal
+                      const val = e.target.value.replace(/[^0-9.]/g, '');
+                      handleFieldChange('saldo_inicial', val);
+                    }}
+                    disabled={modalMode === 'view'}
+                    placeholder="0.00"
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm font-mono focus:outline-none focus:ring-2 transition-all ${
+                      formErrors.saldo_inicial ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-[#27A9E1]/30 focus:border-[#27A9E1]'
+                    } ${modalMode === 'view' ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
+                  />
+                  {formErrors.saldo_inicial && (
+                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                      <FiAlertCircle size={12} /> {formErrors.saldo_inicial}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Descripción */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <FiFileText size={14} className="inline mr-1 text-gray-400" />Descripción
+                </label>
+                <textarea
+                  id="input-descripcion-cuenta"
+                  rows={3}
+                  maxLength={500}
+                  value={formData.descripcion}
+                  onChange={(e) => handleFieldChange('descripcion', e.target.value)}
+                  disabled={modalMode === 'view'}
+                  placeholder="Descripción opcional de la cuenta..."
+                  className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all resize-none ${
+                    'border-gray-200 focus:ring-[#27A9E1]/30 focus:border-[#27A9E1]'
+                  } ${modalMode === 'view' ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
+                />
+              </div>
+
+              {/* Orden */}
+              <div className="w-1/2">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Orden de visualización
+                </label>
+                <input
+                  id="input-orden-cuenta"
+                  type="number"
+                  min={0}
+                  value={formData.orden}
+                  onChange={(e) => handleFieldChange('orden', e.target.value)}
+                  disabled={modalMode === 'view'}
+                  className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
+                    formErrors.orden ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-[#27A9E1]/30 focus:border-[#27A9E1]'
+                  } ${modalMode === 'view' ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
+                />
+                {formErrors.orden && (
+                  <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                    <FiAlertCircle size={12} /> {formErrors.orden}
+                  </p>
+                )}
+              </div>
+
+              {/* Botones */}
+              {modalMode !== 'view' ? (
+                <div className="pt-4 flex gap-3">
+                  <button
+                    id="btn-cancel-modal-cuenta"
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 text-sm font-medium transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    id="btn-submit-modal-cuenta"
+                    type="submit"
+                    disabled={saving}
+                    className="flex-1 px-4 py-2.5 bg-[#27A9E1] text-white rounded-xl text-sm font-medium hover:bg-[#1E8BBF] disabled:opacity-60 disabled:cursor-not-allowed transition-all hover:shadow-lg hover:shadow-[#27A9E1]/20"
+                  >
+                    {saving ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Guardando...
+                      </span>
+                    ) : (
+                      modalMode === 'create' ? 'Crear Cuenta' : 'Guardar Cambios'
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="pt-4">
+                  <button
+                    id="btn-close-view-modal-cuenta"
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="w-full px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
+    </MainLayout>
+  );
+};
+
+export default CuentasFinancierasPage;
