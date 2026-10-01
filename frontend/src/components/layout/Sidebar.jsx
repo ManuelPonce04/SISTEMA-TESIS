@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   FiHome, FiUsers, FiFileText, FiDollarSign,
   FiBarChart2, FiPieChart, FiSettings, FiLogOut,
-  FiChevronDown, FiList, FiCreditCard, FiBookOpen
+  FiChevronDown, FiList, FiCreditCard, FiBookOpen,
+  FiX
 } from 'react-icons/fi';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../context/AuthContext';
@@ -88,17 +89,32 @@ const Sidebar = ({ open, onToggle, onNavigate = () => {} }) => {
 
   return (
     <aside
-      className={`fixed top-0 left-0 h-screen bg-[#0f172a] shadow-xl z-50 transition-all duration-300 ease-in-out flex flex-col
-        ${open ? 'w-64' : 'w-20 md:w-20 -translate-x-full md:translate-x-0'}`}
+      className={`fixed top-0 bottom-0 left-0 h-full bg-[#0f172a] shadow-2xl z-50 transition-transform duration-300 ease-in-out flex flex-col
+        ${open 
+          ? 'translate-x-0 w-72 max-w-[85vw]' 
+          : '-translate-x-full md:translate-x-0 w-72 md:w-20'
+        }`}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-6 border-b border-slate-800 h-[80px]">
-        <img src={logo} alt="Logo" className="w-10 h-10 object-contain flex-shrink-0 drop-shadow-md bg-white rounded-full p-1" />
+      <div className="flex items-center justify-between px-4 py-5 border-b border-slate-800 h-[70px] md:h-[80px]">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <img src={logo} alt="Logo" className="w-10 h-10 object-contain flex-shrink-0 drop-shadow-md bg-white rounded-full p-1" />
+          {open && (
+            <div className="overflow-hidden">
+              <span className="block text-[0.95rem] font-bold text-white whitespace-nowrap leading-tight">SIGCOP-KPI</span>
+              <span className="block text-[0.7rem] font-medium text-[#F4C542] whitespace-nowrap tracking-wide">UE Juan León Mera</span>
+            </div>
+          )}
+        </div>
+        {/* Botón X visible solo en móvil cuando el sidebar está abierto */}
         {open && (
-          <div className="overflow-hidden">
-            <span className="block text-[0.95rem] font-bold text-white whitespace-nowrap leading-tight">SIGCOP-KPI</span>
-            <span className="block text-[0.7rem] font-medium text-[#F4C542] whitespace-nowrap tracking-wide">UE Juan León Mera</span>
-          </div>
+          <button
+            onClick={onToggle}
+            className="md:hidden text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors flex-shrink-0"
+            aria-label="Cerrar menú lateral"
+          >
+            <FiX size={20} />
+          </button>
         )}
       </div>
 

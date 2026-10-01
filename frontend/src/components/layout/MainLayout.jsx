@@ -9,21 +9,29 @@ const MainLayout = ({ children, title = "Panel Principal", subtitle = "Inicio / 
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
 
-  // En móvil empieza cerrado; en desktop empieza abierto
-  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
+  // En móvil/tablet (< 1024px) empieza cerrado; en pantallas grandes (>= 1024px) empieza abierto
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024;
+    }
+    return false;
+  });
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Cierra el sidebar automáticamente al cambiar a móvil
+  // Manejo de responsive al cambiar tamaño de ventana
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 768) setSidebarOpen(false);
-      else setSidebarOpen(true);
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const isMobile = () => window.innerWidth < 768;
+  const isMobile = () => window.innerWidth < 1024;
 
   const handleLogout = async () => {
     const result = await Swal.fire({
@@ -42,31 +50,33 @@ const MainLayout = ({ children, title = "Panel Principal", subtitle = "Inicio / 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
 
-      {/* Overlay oscuro solo en móvil cuando sidebar está abierto */}
+      {/* Overlay oscuro con blur solo en móvil/tablet cuando sidebar está abierto */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-40 md:hidden transition-opacity duration-300"
           onClick={() => setSidebarOpen(false)}
+          aria-label="Cerrar menú lateral"
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar Drawer */}
       <Sidebar
         open={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
         onNavigate={() => { if (isMobile()) setSidebarOpen(false); }}
       />
 
-      {/* Área principal — en desktop se desplaza según el sidebar, en móvil NO */}
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
+      {/* Área principal — en desktop se desplaza según el sidebar, en móvil ocupa 100% */}
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ml-0 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
 
         {/* Navbar Superior */}
-        <header className="bg-white h-[64px] md:h-[80px] border-b border-gray-100 shadow-sm px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 border-t-4 border-t-[#27A9E1]">
-          <div className="flex items-center gap-3">
+        <header className="bg-white h-[64px] md:h-[80px] border-b border-gray-100 shadow-sm px-3 sm:px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 border-t-4 border-t-[#27A9E1]">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {/* Botón hamburguesa — siempre visible */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 text-gray-500 hover:bg-gray-100 hover:text-[#27A9E1] rounded-lg transition-colors flex-shrink-0"
+              aria-label={sidebarOpen ? "Cerrar menú" : "Abrir menú"}
+              className="p-2 text-gray-600 hover:bg-gray-100 hover:text-[#27A9E1] rounded-lg transition-colors flex-shrink-0 touch-manipulation"
             >
               {sidebarOpen ? <FiX size={22} /> : <FiMenu size={22} />}
             </button>

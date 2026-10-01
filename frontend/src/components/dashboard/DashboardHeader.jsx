@@ -68,28 +68,28 @@ const DashboardHeader = ({ usuario, onRefresh, loading, periodo, onPeriodoChange
 
       {/* Saludo + Rol */}
       <div>
-        <p className="text-sm font-medium text-[#27A9E1] mb-0.5">
+        <p className="text-xs sm:text-sm font-medium text-[#27A9E1] mb-0.5">
           {getSaludo()}, <span className="font-semibold">{usuario?.nombre_completo || 'Usuario'}</span>
         </p>
-        <h2 className="text-2xl font-bold text-gray-800 leading-tight">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 leading-tight">
           Panel de Cobranzas
         </h2>
-        <p className="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
+        <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 flex items-center gap-1.5">
           <span className="inline-block w-2 h-2 rounded-full bg-[#10B981]" aria-hidden="true"></span>
           {getRolLabel(usuario)} · {getSyncLabel()}
         </p>
       </div>
 
       {/* Controles: Fecha, Período, Refresh */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
 
         {/* Fecha actual */}
         <div
-          className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-100 shadow-sm text-sm text-gray-600 font-medium capitalize"
+          className="flex items-center gap-1.5 sm:gap-2 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-gray-100 shadow-sm text-xs sm:text-sm text-gray-600 font-medium capitalize"
           aria-label="Fecha actual"
         >
-          <FiCalendar size={15} className="text-[#27A9E1]" aria-hidden="true" />
-          {formatDate()}
+          <FiCalendar size={14} className="text-[#27A9E1]" aria-hidden="true" />
+          <span className="truncate">{formatDate()}</span>
         </div>
 
         {/* Selector de período comparativo */}
@@ -99,9 +99,9 @@ const DashboardHeader = ({ usuario, onRefresh, loading, periodo, onPeriodoChange
             aria-haspopup="listbox"
             aria-expanded={periodoOpen}
             aria-label="Selector de período"
-            className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-100 shadow-sm text-sm text-gray-700 font-medium hover:border-[#27A9E1] hover:text-[#27A9E1] transition-colors focus:outline-none focus:ring-2 focus:ring-[#27A9E1]"
+            className="flex items-center gap-1.5 sm:gap-2 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-gray-100 shadow-sm text-xs sm:text-sm text-gray-700 font-medium hover:border-[#27A9E1] hover:text-[#27A9E1] transition-colors focus:outline-none focus:ring-2 focus:ring-[#27A9E1]"
           >
-            <FiClock size={15} className="text-[#27A9E1]" aria-hidden="true" />
+            <FiClock size={14} className="text-[#27A9E1]" aria-hidden="true" />
             {periodoActual.label}
             <FiChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${periodoOpen ? 'rotate-180' : ''}`} />
           </button>

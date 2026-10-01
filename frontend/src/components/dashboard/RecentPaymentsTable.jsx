@@ -147,7 +147,7 @@ const RecentPaymentsTable = ({ data = [], loading = false }) => {
                   </td>
                   <td className="px-5 py-3.5 text-right">
                     <button
-                      className="p-1.5 text-gray-300 hover:text-[#27A9E1] hover:bg-[#e0f7ff] rounded-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none"
+                      className="p-1.5 text-gray-400 hover:text-[#27A9E1] hover:bg-[#e0f7ff] rounded-lg transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 focus:outline-none"
                       aria-label={`Ver detalle de pago de ${item.estudiante}`}
                     >
                       <FiEye size={15} aria-hidden="true" />

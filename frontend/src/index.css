@@ -1959,13 +1959,11 @@ body { background: var(--gray-50); color: var(--texto); }
   .kpi-card, [class*="kpi"] { min-width: 0; }
 
   /* ── Modales ────────────────────────────────────────── */
-  /* Cualquier modal/panel que use fixed + inset */
-  .modal-container, [class*="modal"] > div:first-child {
+  .modal-container {
     padding: 0.75rem !important;
     align-items: flex-end !important;
   }
-  /* El cuadro del modal ocupa todo el ancho */
-  .modal-box, [class*="modal"] > div > div {
+  .modal-box {
     width: 100% !important;
     max-width: 100% !important;
     border-radius: 1rem 1rem 0 0 !important;

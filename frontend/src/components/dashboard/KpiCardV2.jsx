@@ -170,66 +170,72 @@ const KpiCardV2 = ({
 
   return (
     <div
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 sm:p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group flex flex-col justify-between"
       role="region"
       aria-label={`KPI: ${titulo}`}
     >
-      {/* Fila superior: ícono + variación */}
-      <div className="flex items-start justify-between mb-3">
-        <div
-          className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${colors.iconBg} group-hover:scale-110 transition-transform duration-200`}
-          aria-hidden="true"
-        >
-          <Icon size={20} className={colors.iconText} />
+      <div>
+        {/* Fila superior: ícono + variación */}
+        <div className="flex items-start justify-between mb-2 sm:mb-3">
+          <div
+            className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${colors.iconBg} group-hover:scale-110 transition-transform duration-200`}
+            aria-hidden="true"
+          >
+            <Icon size={18} className={`${colors.iconText} sm:hidden`} />
+            <Icon size={20} className={`${colors.iconText} hidden sm:block`} />
+          </div>
+
+          {/* Variación vs período anterior */}
+          {variacion != null && (
+            <span
+              className={`flex items-center gap-0.5 text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full ${
+                isPositive
+                  ? 'bg-emerald-50 text-emerald-600'
+                  : 'bg-red-50 text-red-500'
+              }`}
+              aria-label={`Variación: ${variacion > 0 ? '+' : ''}${variacion.toFixed(1)}% vs período anterior`}
+            >
+              {isPositive
+                ? <FiTrendingUp size={10} aria-hidden="true" />
+                : <FiTrendingDown size={10} aria-hidden="true" />
+              }
+              {variacion > 0 ? '+' : ''}{variacion.toFixed(1)}%
+            </span>
+          )}
         </div>
 
-        {/* Variación vs período anterior */}
-        {variacion != null && (
-          <span
-            className={`flex items-center gap-0.5 text-xs font-bold px-2 py-1 rounded-full ${
-              isPositive
-                ? 'bg-emerald-50 text-emerald-600'
-                : 'bg-red-50 text-red-500'
-            }`}
-            aria-label={`Variación: ${variacion > 0 ? '+' : ''}${variacion.toFixed(1)}% vs período anterior`}
-          >
-            {isPositive
-              ? <FiTrendingUp size={11} aria-hidden="true" />
-              : <FiTrendingDown size={11} aria-hidden="true" />
-            }
-            {variacion > 0 ? '+' : ''}{variacion.toFixed(1)}%
-          </span>
+        {/* Valor principal */}
+        <div
+          className="text-lg sm:text-2xl font-extrabold text-gray-800 leading-tight mb-0.5 sm:mb-1 tabular-nums truncate"
+          aria-live="polite"
+          title={formatValue(display)}
+        >
+          {formatValue(display)}
+        </div>
+
+        {/* Título */}
+        <p className="text-[11px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 truncate">
+          {titulo}
+        </p>
+
+        {/* Subtítulo */}
+        {subtitulo && (
+          <p className="text-[11px] sm:text-xs text-gray-500 mb-2 sm:mb-3 leading-relaxed line-clamp-2">{subtitulo}</p>
         )}
       </div>
 
-      {/* Valor principal */}
-      <div
-        className="text-2xl font-extrabold text-gray-800 leading-none mb-1 tabular-nums"
-        aria-live="polite"
-      >
-        {formatValue(display)}
-      </div>
-
-      {/* Título */}
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-        {titulo}
-      </p>
-
-      {/* Subtítulo */}
-      {subtitulo && (
-        <p className="text-xs text-gray-500 mb-3 leading-relaxed">{subtitulo}</p>
-      )}
-
       {/* Sparkline + barra de referencia */}
-      <div className="flex items-end justify-between mt-2">
-        <Sparkline
-          data={sparkline}
-          color={colors.spark}
-          positive={isPositive}
-        />
-        <div className="flex flex-col items-end gap-0.5 ml-2">
-          <span className="text-[10px] text-gray-300 font-medium">6 meses</span>
-          <div className={`h-1 w-12 rounded-full opacity-20 ${colors.bar}`} />
+      <div className="flex items-end justify-between mt-2 pt-1 border-t border-gray-50/80">
+        <div className="max-w-[75px] sm:max-w-none flex-1">
+          <Sparkline
+            data={sparkline}
+            color={colors.spark}
+            positive={isPositive}
+          />
+        </div>
+        <div className="flex flex-col items-end gap-0.5 ml-2 flex-shrink-0">
+          <span className="text-[9px] sm:text-[10px] text-gray-300 font-medium">6 meses</span>
+          <div className={`h-1 w-10 sm:w-12 rounded-full opacity-20 ${colors.bar}`} />
         </div>
       </div>
     </div>

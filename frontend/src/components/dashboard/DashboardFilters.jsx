@@ -11,8 +11,8 @@ import { MESES_LECTIVOS, CURSOS_DISPONIBLES, TIPOS_PENSION, FILTROS_DEFAULT } fr
  */
 
 const SelectField = ({ label, name, value, onChange, options, id }) => (
-  <div className="flex flex-col gap-1 min-w-[120px]">
-    <label htmlFor={id} className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+  <div className="flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:min-w-[120px] flex-1">
+    <label htmlFor={id} className="text-[11px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider truncate">
       {label}
     </label>
     <select
@@ -20,7 +20,7 @@ const SelectField = ({ label, name, value, onChange, options, id }) => (
       name={name}
       value={value}
       onChange={onChange}
-      className="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-2 focus:ring-[#27A9E1] focus:border-[#27A9E1] block w-full px-3 py-2 outline-none transition-all appearance-none cursor-pointer"
+      className="bg-white border border-gray-200 text-gray-700 text-xs sm:text-sm rounded-lg focus:ring-2 focus:ring-[#27A9E1] focus:border-[#27A9E1] block w-full px-2.5 sm:px-3 py-2 outline-none transition-all cursor-pointer"
     >
       {options.map(opt => (
         <option key={opt} value={opt}>{opt}</option>
@@ -44,7 +44,7 @@ const DashboardFilters = ({ filtros, setFiltros }) => {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
       <div className="flex flex-col md:flex-row items-stretch">
-        {/* Ícono lateral */}
+        {/* Ícono lateral para desktop */}
         <div className="hidden md:flex bg-[#0f172a] items-center justify-center px-5 flex-shrink-0 border-r-4 border-[#27A9E1]">
           <div className="flex flex-col items-center gap-1.5">
             <FiFilter size={20} className="text-[#F4C542]" aria-hidden="true" />
@@ -56,8 +56,29 @@ const DashboardFilters = ({ filtros, setFiltros }) => {
           </div>
         </div>
 
-        {/* Filtros */}
-        <div className="flex flex-wrap items-end gap-4 p-4 flex-1">
+        {/* Cabecera de filtros visible en móvil */}
+        <div className="md:hidden flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <FiFilter size={16} className="text-[#27A9E1]" />
+            <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">Filtros</span>
+            {activeCount > 0 && (
+              <span className="bg-[#27A9E1] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {activeCount} activo{activeCount > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          {activeCount > 0 && (
+            <button
+              onClick={handleReset}
+              className="text-[11px] font-semibold text-red-500 hover:text-red-700 flex items-center gap-1"
+            >
+              <FiX size={12} /> Limpiar
+            </button>
+          )}
+        </div>
+
+        {/* Contenedor de filtros con cuadrícula 2 col en móvil */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap items-end gap-3 p-3 sm:p-4 flex-1">
           <SelectField
             id="filtro-anio"
             label="Año Lectivo"
