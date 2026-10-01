@@ -89,9 +89,9 @@ const Sidebar = ({ open, onToggle, onNavigate = () => {} }) => {
 
   return (
     <aside
-      className={`fixed top-0 bottom-0 left-0 h-full bg-[#0f172a] shadow-2xl z-50 transition-transform duration-300 ease-in-out flex flex-col
+      className={`fixed top-0 bottom-0 left-0 h-full bg-[#0f172a] shadow-2xl z-50 transition-all duration-300 ease-in-out flex flex-col
         ${open 
-          ? 'translate-x-0 w-72 max-w-[85vw]' 
+          ? 'translate-x-0 w-72 md:w-64 max-w-[85vw] md:max-w-none' 
           : '-translate-x-full md:translate-x-0 w-72 md:w-20'
         }`}
     >

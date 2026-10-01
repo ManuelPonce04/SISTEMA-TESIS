@@ -64,7 +64,7 @@ const DashboardHeader = ({ usuario, onRefresh, loading, periodo, onPeriodoChange
   };
 
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4 mb-1 w-full min-w-0">
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4 mb-2 sm:mb-4 w-full min-w-0">
 
       {/* Saludo + Rol */}
       <div>
