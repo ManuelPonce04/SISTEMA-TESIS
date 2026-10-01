@@ -26,6 +26,8 @@ import KPIPage from './pages/KPIPage';
 import CobrarPensionesPage from './pages/pensiones/CobrarPensionesPage';
 import EstadoCuentaPage from './pages/pensiones/EstadoCuentaPage';
 import MorososPage from './pages/pensiones/MorososPage';
+import ConfiguracionPensionesPage from './pages/pensiones/ConfiguracionPensionesPage';
+import ConfiguracionPage from './pages/ConfiguracionPage';
 
 function App() {
   return (
@@ -75,6 +77,10 @@ function App() {
             <Route path="/control-financiero/facturacion/historial"  element={<CobrarPensionesPage defaultTab="historial" />} />
             <Route path="/control-financiero/pensiones/estado-cuenta" element={<EstadoCuentaPage />} />
             <Route path="/control-financiero/pensiones/morosos"       element={<MorososPage />} />
+
+            {/* Configuración */}
+            <Route path="/configuracion" element={<ConfiguracionPage />} />
+            <Route path="/control-financiero/pensiones/configuracion" element={<ConfiguracionPensionesPage />} />
 
           </Route>
 

@@ -24,6 +24,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
     <title>Unidad Educativa Juan León Mera · Cobranzas</title>
+    <script>
+      try {
+        if (localStorage.getItem('theme_mode') === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

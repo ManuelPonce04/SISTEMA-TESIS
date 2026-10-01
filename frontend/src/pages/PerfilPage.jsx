@@ -3,6 +3,7 @@ import MainLayout from '../components/layout/MainLayout';
 import { useAuth } from '../context/AuthContext';
 import { FiUser, FiLock, FiSave, FiAlertCircle } from 'react-icons/fi';
 import Swal from 'sweetalert2';
+import api from '../services/authService';
 
 const PerfilPage = () => {
   const { usuario, token, login } = useAuth();
@@ -27,15 +28,7 @@ const PerfilPage = () => {
       const payload = { nombre_completo: formData.nombre_completo };
       if (formData.password) payload.password = formData.password;
 
-      const res = await fetch('http://localhost:3001/api/usuarios/perfil', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
+      const { data } = await api.put('/usuarios/perfil', payload);
       
       if (data.success) {
         Swal.fire('Éxito', 'Perfil actualizado correctamente', 'success');
