@@ -45,8 +45,29 @@
   --transition:        all 0.2s cubic-bezier(0.4,0,0.2,1);
 }
 
-html { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif; scroll-behavior: smooth; }
-body { background: var(--gray-50); color: var(--texto); }
+html {
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
+}
+
+body {
+  background: var(--gray-50);
+  color: var(--texto);
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
+  position: relative;
+}
+
+#root {
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
+  min-height: 100vh;
+}
 
 /* ============================================================
    LOGIN — Concepto "Limpio, Luminoso e Institucional" v3

@@ -58,7 +58,7 @@ const UpcomingDueList = ({ data = [], loading = false }) => {
   return (
     <Card noPadding className="flex flex-col">
       {/* Header */}
-      <div className="p-5 border-b border-gray-50 flex items-start justify-between">
+      <div className="p-4 sm:p-5 border-b border-gray-50 flex items-start justify-between">
         <div>
           <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
             <FiClock size={16} className="text-amber-500" aria-hidden="true" />
@@ -76,7 +76,7 @@ const UpcomingDueList = ({ data = [], loading = false }) => {
       </div>
 
       {/* Lista */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto w-full min-w-0">
         {loading ? (
           <div className="p-5 space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (

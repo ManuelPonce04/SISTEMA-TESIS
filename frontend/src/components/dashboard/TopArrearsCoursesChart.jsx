@@ -80,7 +80,7 @@ const TopArrearsCoursesChart = ({ data = [] }) => {
 
   return (
     <Card noPadding className="flex flex-col">
-      <div className="p-5 border-b border-gray-50 flex items-start justify-between gap-3">
+      <div className="p-4 sm:p-5 border-b border-gray-50 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-bold text-gray-800">Top 5 Cursos — Mayor Morosidad</h3>
           <p className="text-xs text-gray-400 mt-0.5">
@@ -101,7 +101,7 @@ const TopArrearsCoursesChart = ({ data = [] }) => {
         </div>
       </div>
 
-      <div className="p-5">
+      <div className="p-4 sm:p-5 w-full min-w-0">
         {sorted.length === 0 ? (
           <div className="flex items-center justify-center py-10 text-gray-300 text-sm">
             Sin datos para mostrar

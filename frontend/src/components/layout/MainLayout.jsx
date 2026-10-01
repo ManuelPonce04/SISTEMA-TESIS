@@ -48,7 +48,7 @@ const MainLayout = ({ children, title = "Panel Principal", subtitle = "Inicio / 
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div className="flex min-h-screen bg-[#F8FAFC] w-full max-w-full overflow-x-hidden">
 
       {/* Overlay oscuro con blur solo en móvil/tablet cuando sidebar está abierto */}
       {sidebarOpen && (
@@ -67,10 +67,10 @@ const MainLayout = ({ children, title = "Panel Principal", subtitle = "Inicio / 
       />
 
       {/* Área principal — en desktop se desplaza según el sidebar, en móvil ocupa 100% */}
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ml-0 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 w-full max-w-full overflow-x-hidden transition-all duration-300 ml-0 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
 
         {/* Navbar Superior */}
-        <header className="bg-white h-[64px] md:h-[80px] border-b border-gray-100 shadow-sm px-3 sm:px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 border-t-4 border-t-[#27A9E1]">
+        <header className="bg-white h-[64px] md:h-[80px] border-b border-gray-100 shadow-sm px-3 sm:px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 border-t-4 border-t-[#27A9E1] w-full max-w-full">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {/* Botón hamburguesa — siempre visible */}
             <button
@@ -146,14 +146,14 @@ const MainLayout = ({ children, title = "Panel Principal", subtitle = "Inicio / 
         </header>
 
         {/* Cuerpo */}
-        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-x-hidden">
-          <div className="flex flex-col lg:flex-row gap-4 md:gap-6 max-w-[1600px] mx-auto">
-            <div className="flex-1 min-w-0 flex flex-col gap-4 md:gap-6">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-x-hidden w-full max-w-full min-w-0">
+          <div className="flex flex-col lg:flex-row gap-4 md:gap-6 max-w-[1600px] w-full mx-auto min-w-0">
+            <div className="flex-1 min-w-0 w-full max-w-full flex flex-col gap-4 md:gap-6">
               {children}
             </div>
 
             {rightPanel && (
-              <aside className="w-full lg:w-[320px] flex-shrink-0 flex flex-col gap-4 md:gap-6">
+              <aside className="w-full lg:w-[320px] flex-shrink-0 flex flex-col gap-4 md:gap-6 min-w-0">
                 {rightPanel}
               </aside>
             )}

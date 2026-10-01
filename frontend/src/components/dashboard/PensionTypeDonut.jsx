@@ -93,9 +93,9 @@ const PensionTypeDonut = ({ data = [] }) => {
           Sin datos para mostrar
         </div>
       ) : (
-        <div className="flex flex-col sm:flex-row items-center p-4 gap-4">
+        <div className="flex flex-col sm:flex-row items-center p-3 sm:p-4 gap-4 w-full min-w-0">
           {/* Dona */}
-          <div className="w-full sm:w-[200px] h-[200px] flex-shrink-0">
+          <div className="w-full sm:w-[200px] h-[190px] sm:h-[200px] flex-shrink-0 min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie

@@ -64,7 +64,7 @@ const DashboardHeader = ({ usuario, onRefresh, loading, periodo, onPeriodoChange
   };
 
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-1">
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4 mb-1 w-full min-w-0">
 
       {/* Saludo + Rol */}
       <div>
@@ -81,14 +81,14 @@ const DashboardHeader = ({ usuario, onRefresh, loading, periodo, onPeriodoChange
       </div>
 
       {/* Controles: Fecha, Período, Refresh */}
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto min-w-0">
 
         {/* Fecha actual */}
         <div
-          className="flex items-center gap-1.5 sm:gap-2 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-gray-100 shadow-sm text-xs sm:text-sm text-gray-600 font-medium capitalize"
+          className="flex items-center gap-1.5 sm:gap-2 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-gray-100 shadow-sm text-xs sm:text-sm text-gray-600 font-medium capitalize max-w-full overflow-hidden"
           aria-label="Fecha actual"
         >
-          <FiCalendar size={14} className="text-[#27A9E1]" aria-hidden="true" />
+          <FiCalendar size={14} className="text-[#27A9E1] flex-shrink-0" aria-hidden="true" />
           <span className="truncate">{formatDate()}</span>
         </div>
 

@@ -66,7 +66,7 @@ const ArrearsByLevelChart = ({ data = [] }) => {
         </p>
       </div>
 
-      <div className="p-5 h-[260px]">
+      <div className="p-3 sm:p-5 h-[260px] w-full min-w-0">
         {data.length === 0 ? (
           <div className="h-full flex items-center justify-center text-gray-300 text-sm">
             Sin datos para mostrar

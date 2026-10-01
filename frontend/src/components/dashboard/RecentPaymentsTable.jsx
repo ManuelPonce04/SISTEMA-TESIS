@@ -104,9 +104,9 @@ const RecentPaymentsTable = ({ data = [], loading = false }) => {
         </div>
       </div>
 
-      {/* Tabla */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm whitespace-nowrap" role="table" aria-label="Tabla de pagos recientes">
+      {/* Tabla con scroll horizontal contenido */}
+      <div className="overflow-x-auto w-full min-w-0 max-w-full custom-scrollbar">
+        <table className="w-full text-left text-sm whitespace-nowrap min-w-[620px]" role="table" aria-label="Tabla de pagos recientes">
           <thead className="bg-gray-50 text-gray-400 font-semibold uppercase tracking-wider text-xs">
             <tr>
               <th className="px-5 py-3.5 font-semibold" scope="col">Fecha</th>

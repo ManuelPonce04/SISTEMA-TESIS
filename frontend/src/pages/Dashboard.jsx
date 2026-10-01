@@ -157,8 +157,8 @@ const Dashboard = () => {
       <DashboardFilters filtros={filtros} setFiltros={setFiltros} />
 
       {/* ── 4. KPIs principales ───────────────────────────────── */}
-      <section aria-label="Indicadores clave de rendimiento" className="mb-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+      <section aria-label="Indicadores clave de rendimiento" className="mb-6 w-full min-w-0">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 w-full min-w-0">
 
           {/* KPI 1: Total estudiantes matriculados */}
           <KpiCardV2
@@ -249,29 +249,37 @@ const Dashboard = () => {
       </section>
 
       {/* ── 5. Gráficos analíticos ────────────────────────────── */}
-      <section aria-label="Gráficos analíticos" className="mb-6">
+      <section aria-label="Gráficos analíticos" className="mb-6 w-full min-w-0">
         {/* Fila superior: evolución + cartera por nivel */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-          <RevenueTrendChart data={revenueTrend} />
-          <ArrearsByLevelChart data={arrearsByLevel} />
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6 mb-6 w-full min-w-0">
+          <div className="w-full min-w-0 overflow-hidden">
+            <RevenueTrendChart data={revenueTrend} />
+          </div>
+          <div className="w-full min-w-0 overflow-hidden">
+            <ArrearsByLevelChart data={arrearsByLevel} />
+          </div>
         </div>
 
         {/* Fila inferior: dona + top cursos */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <PensionTypeDonut data={pensionTypes} />
-          <TopArrearsCoursesChart data={topCourses} />
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6 w-full min-w-0">
+          <div className="w-full min-w-0 overflow-hidden">
+            <PensionTypeDonut data={pensionTypes} />
+          </div>
+          <div className="w-full min-w-0 overflow-hidden">
+            <TopArrearsCoursesChart data={topCourses} />
+          </div>
         </div>
       </section>
 
       {/* ── 6 + 7. Tabla de pagos + Panel de vencimientos ────── */}
-      <section aria-label="Actividad reciente y vencimientos" className="mb-6">
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <section aria-label="Actividad reciente y vencimientos" className="mb-6 w-full min-w-0">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6 w-full min-w-0">
           {/* Tabla ocupa 2 columnas en XL */}
-          <div className="xl:col-span-2">
+          <div className="xl:col-span-2 w-full min-w-0 overflow-hidden">
             <RecentPaymentsTable data={recentPayments} loading={loading} />
           </div>
           {/* Panel lateral de vencimientos */}
-          <div>
+          <div className="w-full min-w-0 overflow-hidden">
             <UpcomingDueList data={upcomingDues} loading={loading} />
           </div>
         </div>
