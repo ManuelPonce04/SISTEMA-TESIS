@@ -6,6 +6,10 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        'xs': '475px',   // Teléfonos muy pequeños
+        // sm: 640px, md: 768px, lg: 1024px, xl: 1280px (Tailwind defaults)
+      },
       colors: {
         celeste: {
           50:  '#e0f7ff',

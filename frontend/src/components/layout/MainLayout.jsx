@@ -1,15 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiMenu, FiX, FiBell, FiChevronDown, FiUser, FiLogOut, FiSearch } from 'react-icons/fi';
+import { FiMenu, FiX, FiBell, FiChevronDown, FiUser, FiLogOut, FiSettings } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from './Sidebar';
 import Swal from 'sweetalert2';
 
 const MainLayout = ({ children, title = "Panel Principal", subtitle = "Inicio / Dashboard", rightPanel }) => {
   const { usuario, logout } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
+
+  // En móvil empieza cerrado; en desktop empieza abierto
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // Cierra el sidebar automáticamente al cambiar a móvil
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) setSidebarOpen(false);
+      else setSidebarOpen(true);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isMobile = () => window.innerWidth < 768;
 
   const handleLogout = async () => {
     const result = await Swal.fire({
@@ -27,78 +41,88 @@ const MainLayout = ({ children, title = "Panel Principal", subtitle = "Inicio / 
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
-      {/* Sidebar - Fijo en escritorio, drawer en móvil */}
-      <Sidebar open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
 
-      {/* Área principal */}
+      {/* Overlay oscuro solo en móvil cuando sidebar está abierto */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <Sidebar
+        open={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        onNavigate={() => { if (isMobile()) setSidebarOpen(false); }}
+      />
+
+      {/* Área principal — en desktop se desplaza según el sidebar, en móvil NO */}
       <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
-        
+
         {/* Navbar Superior */}
-        <header className="bg-white h-[80px] border-b border-gray-100 shadow-sm px-6 flex items-center justify-between sticky top-0 z-40 border-t-4 border-t-[#27A9E1]">
-          <div className="flex items-center gap-4">
-            <button 
+        <header className="bg-white h-[64px] md:h-[80px] border-b border-gray-100 shadow-sm px-4 md:px-6 flex items-center justify-between sticky top-0 z-30 border-t-4 border-t-[#27A9E1]">
+          <div className="flex items-center gap-3">
+            {/* Botón hamburguesa — siempre visible */}
+            <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 text-gray-500 hover:bg-gray-100 hover:text-[#27A9E1] rounded-lg transition-colors md:hidden"
+              className="p-2 text-gray-500 hover:bg-gray-100 hover:text-[#27A9E1] rounded-lg transition-colors flex-shrink-0"
             >
               {sidebarOpen ? <FiX size={22} /> : <FiMenu size={22} />}
             </button>
-            <div className="hidden md:block">
-              <span className="text-xs font-medium text-gray-400">{subtitle}</span>
-              <h1 className="text-xl font-bold text-gray-800 leading-tight">{title}</h1>
+
+            <div>
+              <span className="text-[10px] md:text-xs font-medium text-gray-400 leading-none block">{subtitle}</span>
+              <h1 className="text-base md:text-xl font-bold text-gray-800 leading-tight truncate max-w-[160px] sm:max-w-xs md:max-w-none">{title}</h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            {/* Buscador */}
-            <div className="hidden lg:flex items-center relative">
-              <FiSearch className="absolute left-3 text-gray-400" size={18} />
-              <input 
-                type="text" 
-                placeholder="Buscar estudiante, representante o pago..."
-                className="w-[300px] pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#27A9E1] focus:bg-white transition-all"
-              />
-            </div>
-
+          <div className="flex items-center gap-2 md:gap-4">
             {/* Notificaciones */}
             <button className="relative p-2 text-gray-500 hover:bg-[#e0f7ff] hover:text-[#27A9E1] rounded-full transition-colors">
-              <FiBell size={22} />
+              <FiBell size={20} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
 
             {/* Perfil */}
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-3 p-1.5 hover:bg-gray-50 rounded-xl transition-colors border border-transparent hover:border-gray-100 focus:outline-none"
+                className="flex items-center gap-2 p-1.5 hover:bg-gray-50 rounded-xl transition-colors border border-transparent hover:border-gray-100 focus:outline-none"
               >
-                <div className="w-10 h-10 rounded-full bg-[#27A9E1] text-white flex items-center justify-center font-bold shadow-sm">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#27A9E1] text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
                   {usuario?.nombre_completo ? usuario.nombre_completo.substring(0, 2).toUpperCase() : 'US'}
                 </div>
-                <div className="hidden md:flex flex-col items-start">
-                  <span className="text-sm font-semibold text-gray-800">{usuario?.nombre_completo || 'Usuario'}</span>
-                </div>
-                <FiChevronDown className={`text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                <span className="hidden md:block text-sm font-semibold text-gray-800 max-w-[120px] truncate">
+                  {usuario?.nombre_completo || 'Usuario'}
+                </span>
+                <FiChevronDown className={`text-gray-400 transition-transform flex-shrink-0 ${dropdownOpen ? 'rotate-180' : ''}`} size={16} />
               </button>
 
               {/* Menú Desplegable */}
               {dropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)}></div>
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-fade-in">
-                    <button 
+                  <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                    {/* Nombre en móvil */}
+                    <div className="px-5 py-2 border-b border-gray-100 mb-1 md:hidden">
+                      <p className="text-sm font-semibold text-gray-800 truncate">{usuario?.nombre_completo || 'Usuario'}</p>
+                      <p className="text-xs text-gray-400 truncate">{usuario?.correo || ''}</p>
+                    </div>
+                    <button
                       onClick={() => { setDropdownOpen(false); navigate('/perfil'); }}
                       className="w-full text-left px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#27A9E1] flex items-center gap-3 transition-colors"
                     >
                       <FiUser size={16} /> Mi Perfil
                     </button>
-                    <button 
+                    <button
                       onClick={() => { setDropdownOpen(false); navigate('/configuracion'); }}
                       className="w-full text-left px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#27A9E1] flex items-center gap-3 transition-colors"
                     >
-                      <FiMenu size={16} /> Configuración
+                      <FiSettings size={16} /> Configuración
                     </button>
                     <div className="h-px bg-gray-100 my-1 mx-4"></div>
-                    <button 
+                    <button
                       onClick={() => { setDropdownOpen(false); handleLogout(); }}
                       className="w-full text-left px-5 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
                     >
@@ -111,21 +135,15 @@ const MainLayout = ({ children, title = "Panel Principal", subtitle = "Inicio / 
           </div>
         </header>
 
-        {/* Cuerpo del Layout */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
-          <div className="flex flex-col lg:flex-row gap-6 max-w-[1600px] mx-auto">
-            <div className="flex-1 min-w-0 flex flex-col gap-6">
-              {/* Título móvil (solo visible en pantallas pequeñas) */}
-              <div className="md:hidden mb-2">
-                <span className="text-xs font-medium text-gray-400">{subtitle}</span>
-                <h1 className="text-xl font-bold text-gray-800">{title}</h1>
-              </div>
-              
+        {/* Cuerpo */}
+        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-x-hidden">
+          <div className="flex flex-col lg:flex-row gap-4 md:gap-6 max-w-[1600px] mx-auto">
+            <div className="flex-1 min-w-0 flex flex-col gap-4 md:gap-6">
               {children}
             </div>
 
             {rightPanel && (
-              <aside className="w-full lg:w-[320px] flex-shrink-0 flex flex-col gap-6">
+              <aside className="w-full lg:w-[320px] flex-shrink-0 flex flex-col gap-4 md:gap-6">
                 {rightPanel}
               </aside>
             )}

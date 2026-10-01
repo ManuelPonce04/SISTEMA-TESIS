@@ -48,7 +48,7 @@ const menuItems = [
   { icon: FiSettings,   label: 'Configuración',path: '/configuracion' },
 ];
 
-const Sidebar = ({ open, onToggle }) => {
+const Sidebar = ({ open, onToggle, onNavigate = () => {} }) => {
   const { usuario, logout } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation();
@@ -87,8 +87,9 @@ const Sidebar = ({ open, onToggle }) => {
   };
 
   return (
-    <aside 
-      className={`fixed top-0 left-0 h-screen bg-[#0f172a] shadow-xl z-50 transition-all duration-300 ease-in-out flex flex-col ${open ? 'w-64' : 'w-20'} ${!open ? 'max-md:-translate-x-full' : ''}`}
+    <aside
+      className={`fixed top-0 left-0 h-screen bg-[#0f172a] shadow-xl z-50 transition-all duration-300 ease-in-out flex flex-col
+        ${open ? 'w-64' : 'w-20 md:w-20 -translate-x-full md:translate-x-0'}`}
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-6 border-b border-slate-800 h-[80px]">
@@ -114,7 +115,7 @@ const Sidebar = ({ open, onToggle }) => {
             return (
               <div key={item.label}>
                 <button
-                  onClick={() => open ? toggleSubmenu(item.label) : navigate(item.submenu[0].path)}
+                  onClick={() => { if (open) { toggleSubmenu(item.label); } else { navigate(item.submenu[0].path); onNavigate(); } }}
                   title={!open ? item.label : ''}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium relative overflow-hidden group ${
                     isSubActive && !isExpanded
@@ -148,7 +149,7 @@ const Sidebar = ({ open, onToggle }) => {
                       return (
                         <button
                           key={sub.label}
-                          onClick={() => navigate(sub.path)}
+                          onClick={() => { navigate(sub.path); onNavigate(); }}
                           className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200 text-[0.8rem] font-medium ${
                             subActive
                               ? 'bg-[#27A9E1] text-white shadow-[0_2px_8px_rgba(39,169,225,0.35)]'
@@ -171,7 +172,7 @@ const Sidebar = ({ open, onToggle }) => {
           return (
             <button
               key={item.label}
-              onClick={() => navigate(item.path)}
+              onClick={() => { navigate(item.path); onNavigate(); }}
               title={!open ? item.label : ''}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium relative overflow-hidden group ${
                 active 

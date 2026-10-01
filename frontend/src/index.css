@@ -430,6 +430,7 @@ body { background: var(--gray-50); color: var(--texto); }
   outline:        none;
   transition:     border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   -webkit-appearance: none;
+  appearance: none;
 }
 .lg3-input::placeholder { color: #B0BFCD; font-size: 0.88rem; }
 .lg3-input:focus {
@@ -1602,7 +1603,7 @@ body { background: var(--gray-50); color: var(--texto); }
   gap: 1rem;
   flex-wrap: wrap;
 }
-.saludo-wrap {}
+/* .saludo-wrap — no styles needed */
 .saludo-nombre { font-size: 1.15rem; color: var(--gray-800); margin-bottom: 0.2rem; }
 .saludo-rol    { font-size: 0.83rem; color: var(--gray-400); font-weight: 500; }
 
@@ -1713,7 +1714,7 @@ body { background: var(--gray-50); color: var(--texto); }
 
 /* ── Tablas ──────────────────────────────────────────────── */
 .tables-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.ranking-row {}
+/* .ranking-row — no styles needed */
 
 .table-card {
   background: #fff; border-radius: var(--radius-lg);
@@ -1797,7 +1798,7 @@ body { background: var(--gray-50); color: var(--texto); }
 .deuda-bar-pct { font-size: 0.7rem; color: var(--gray-400); white-space: nowrap; flex-shrink: 0; }
 
 /* ── KPI Indicadores ─────────────────────────────────────── */
-.kpi-ind-section {}
+/* .kpi-ind-section — no styles needed */
 .kpi-indicadores-wrap {
   background: #fff; border-radius: var(--radius-lg);
   border: 1px solid var(--gray-100);
@@ -1827,7 +1828,7 @@ body { background: var(--gray-50); color: var(--texto); }
 .kpi-ind-value { font-size: 1rem; font-weight: 800; color: var(--gray-800); }
 
 .kpi-bars-section { display: flex; flex-direction: column; gap: 0.75rem; }
-.kpi-bar-item {}
+/* .kpi-bar-item — no styles needed */
 .kpi-bar-header { display: flex; justify-content: space-between; margin-bottom: 0.35rem; }
 .kpi-bar-label  { font-size: 0.82rem; color: var(--gray-600); font-weight: 500; }
 .kpi-bar-value  { font-size: 0.82rem; font-weight: 700; }
@@ -1931,3 +1932,114 @@ body { background: var(--gray-50); color: var(--texto); }
 .action-orange { background: #fffbeb; color: #f59e0b; }
 .action-gray { background: var(--gray-100); color: var(--gray-600); }
 .action-btn span { font-size: 0.75rem; font-weight: 600; color: var(--gray-600); text-align: center; line-height: 1.1; }
+
+/* ============================================================
+   RESPONSIVE MÓVIL — Adaptaciones globales para pantallas < 768px
+   ============================================================ */
+
+/* ── Tablas: scroll horizontal en móvil ─────────────────────── */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 0.75rem;
+}
+@media (max-width: 767px) {
+  /* Tablas dentro de contenedores sin clase específica */
+  .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+
+  /* Texto de tablas más compacto */
+  table td, table th { font-size: 0.75rem; padding: 0.5rem 0.65rem; white-space: nowrap; }
+
+  /* ── Cards / Grids ─────────────────────────────────── */
+  .card-grid-4 { grid-template-columns: repeat(2, 1fr) !important; gap: 0.75rem !important; }
+  .card-grid-3 { grid-template-columns: repeat(1, 1fr) !important; }
+  .stats-grid   { grid-template-columns: repeat(2, 1fr) !important; gap: 0.6rem !important; }
+
+  /* KPI cards del dashboard */
+  .kpi-card, [class*="kpi"] { min-width: 0; }
+
+  /* ── Modales ────────────────────────────────────────── */
+  /* Cualquier modal/panel que use fixed + inset */
+  .modal-container, [class*="modal"] > div:first-child {
+    padding: 0.75rem !important;
+    align-items: flex-end !important;
+  }
+  /* El cuadro del modal ocupa todo el ancho */
+  .modal-box, [class*="modal"] > div > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 1rem 1rem 0 0 !important;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+
+  /* ── Tipografía ─────────────────────────────────────── */
+  h1 { font-size: 1.25rem !important; }
+  h2 { font-size: 1.1rem !important; }
+  h3 { font-size: 1rem !important; }
+
+  /* ── Botones de acción en tablas ────────────────────── */
+  .btn-action-group { flex-wrap: wrap; gap: 0.4rem; }
+  .btn-action-group button, .btn-action-group a {
+    font-size: 0.7rem !important;
+    padding: 0.3rem 0.6rem !important;
+  }
+
+  /* ── Formularios: stack vertical ────────────────────── */
+  .form-row-2 { grid-template-columns: 1fr !important; }
+  .form-row-3 { grid-template-columns: 1fr !important; }
+
+  /* ── Filtros / barra de herramientas ────────────────── */
+  .toolbar-flex { flex-direction: column !important; gap: 0.75rem !important; align-items: stretch !important; }
+  .toolbar-flex input, .toolbar-flex select { width: 100% !important; }
+
+  /* ── Sidebar: ocultar icono colapsado cuando está cerrado ── */
+  /* (ya manejado en Sidebar.jsx, esto es por si acaso) */
+
+  /* ── Dashboard quick-actions: 2 columnas en móvil ── */
+  .quick-actions-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* ── Secciones con flex row → columna ─────────────── */
+  .flex-row-to-col { flex-direction: column !important; }
+
+  /* ── Padding de secciones ─────────────────────────── */
+  .section-pad { padding: 1rem !important; }
+
+  /* ── Ocultar columnas secundarias en tablas ─────────── */
+  .hide-mobile { display: none !important; }
+
+  /* ── Mostrar solo en móvil ──────────────────────────── */
+  .show-mobile { display: flex !important; }
+}
+
+/* ── Tablet: md breakpoint (768px - 1023px) ──────────────────── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .card-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .hide-mobile  { display: table-cell !important; }
+}
+
+/* ── Inputs y selects: mejor touch target en móvil ──────────── */
+@media (max-width: 767px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 16px !important; /* Evita zoom automático en iOS */
+    min-height: 44px;
+  }
+
+  /* Botones más fáciles de presionar */
+  button:not(.no-touch) {
+    min-height: 40px;
+  }
+}
+
+/* ── Scrollbar delgado en móvil para tablas ─────────────────── */
+@media (max-width: 767px) {
+  ::-webkit-scrollbar { height: 3px; width: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+}
