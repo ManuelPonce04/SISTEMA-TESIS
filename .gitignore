@@ -6,6 +6,7 @@ backend/node_modules/
 # Variables de entorno (NUNCA subir al repositorio)
 .env
 frontend/.env
+frontend/.env.production
 backend/.env
 
 # Build
