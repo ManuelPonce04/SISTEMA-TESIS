@@ -5,6 +5,9 @@ backend/node_modules/
 
 # Variables de entorno (NUNCA subir al repositorio)
 .env
+.env*
+*.env
+*.env*
 frontend/.env
 frontend/.env.production
 backend/.env
