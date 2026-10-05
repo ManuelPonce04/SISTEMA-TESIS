@@ -1,0 +1,10 @@
+{
+  "name": "sistema-tesis-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix backend start",
+    "dev": "npm --prefix frontend dev"
+  }
+}
